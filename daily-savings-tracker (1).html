@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Savings Tracker — ₹</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f0e8;
+    --surface: #fffdf7;
+    --surface2: #f0ebe0;
+    --ink: #1a1612;
+    --ink2: #5a5147;
+    --ink3: #9a9188;
+    --accent: #c8430a;
+    --accent2: #1b6b4a;
+    --accent-pale: #fbe8df;
+    --accent2-pale: #dff0e8;
+    --border: rgba(26,22,18,0.12);
+    --border2: rgba(26,22,18,0.06);
+    --radius: 4px;
+    --radius-lg: 10px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--ink);
+    color: var(--bg);
+    padding: 2.5rem 2rem 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  header::before {
+    content: '₹';
+    font-family: 'DM Serif Display', serif;
+    font-size: 220px;
+    color: rgba(255,255,255,0.04);
+    position: absolute;
+    right: -20px;
+    top: -40px;
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .header-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(245,240,232,0.45);
+    margin-bottom: 0.75rem;
+  }
+
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 400;
+    line-height: 1.1;
+    color: var(--bg);
+    max-width: 500px;
+  }
+
+  header h1 em {
+    font-style: italic;
+    color: #e8a070;
+  }
+
+  .header-sub {
+    margin-top: 1rem;
+    font-size: 13px;
+    color: rgba(245,240,232,0.5);
+    font-weight: 400;
+    letter-spacing: 0.02em;
+  }
+
+  /* ── LAYOUT ── */
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+
+  /* ── METRIC CARDS ── */
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 2.5rem;
+  }
+
+  .metric {
+    background: var(--surface);
+    padding: 1.25rem 1.5rem;
+    transition: background 0.2s;
+  }
+
+  .metric:hover { background: #fffef9; }
+
+  .metric-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 6px;
+  }
+
+  .metric-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem;
+    color: var(--ink);
+    line-height: 1;
+  }
+
+  .metric-value.accent { color: var(--accent); }
+  .metric-value.accent2 { color: var(--accent2); }
+
+  /* ── SECTION TITLE ── */
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 1rem;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── DATA ENTRY TABLE ── */
+  .entry-section { margin-bottom: 2.5rem; }
+
+  .entry-header {
+    display: grid;
+    grid-template-columns: 1fr 160px 36px;
+    gap: 8px;
+    padding: 0 0 8px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 6px;
+  }
+
+  .entry-header span {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink3);
+  }
+
+  .entry-row {
+    display: grid;
+    grid-template-columns: 1fr 160px 36px;
+    gap: 8px;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border2);
+    animation: slideIn 0.2s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .entry-row input {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    color: var(--ink);
+    background: transparent;
+    border: none;
+    padding: 6px 8px;
+    border-radius: var(--radius);
+    width: 100%;
+    outline: none;
+    transition: background 0.15s;
+  }
+
+  .entry-row input:focus {
+    background: var(--surface);
+    box-shadow: 0 0 0 2px rgba(200,67,10,0.2);
+  }
+
+  .entry-row input[type="number"] {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    text-align: right;
+  }
+
+  .remove-btn {
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--border);
+    background: none;
+    border-radius: var(--radius);
+    color: var(--ink3);
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+
+  .remove-btn:hover {
+    background: #fde8e3;
+    border-color: #e8a070;
+    color: var(--accent);
+  }
+
+  .add-btn {
+    margin-top: 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--ink2);
+    background: none;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 8px 16px;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.15s;
+  }
+
+  .add-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-pale);
+  }
+
+  /* ── CHARTS ── */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+  }
+
+  .chart-card-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.1rem;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+
+  .chart-card-sub {
+    font-size: 12px;
+    color: var(--ink3);
+    margin-bottom: 1.25rem;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .chart-wrap { position: relative; width: 100%; height: 280px; }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center;
+    padding: 2rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--ink3);
+    letter-spacing: 0.06em;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 600px) {
+    .metrics { grid-template-columns: 1fr; }
+    .metric-value { font-size: 1.5rem; }
+    header h1 { font-size: 2rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-eyebrow">Personal Finance Tool</div>
+  <h1>Daily Savings <em>Tracker</em></h1>
+  <p class="header-sub">Indian Rupee (₹) — Enter your amounts and watch your wealth grow</p>
+</header>
+
+<main>
+
+  <!-- METRICS -->
+  <div class="metrics">
+    <div class="metric">
+      <div class="metric-label">Total Saved</div>
+      <div class="metric-value accent" id="m-total">₹0</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Daily Average</div>
+      <div class="metric-value" id="m-avg">₹0</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Best Day</div>
+      <div class="metric-value accent2" id="m-best">₹0</div>
+    </div>
+  </div>
+
+  <!-- DATA ENTRY -->
+  <div class="entry-section">
+    <div class="section-title">Your savings data</div>
+    <div class="entry-header">
+      <span>Day / Label</span>
+      <span style="text-align:right;">Amount (₹)</span>
+      <span></span>
+    </div>
+    <div id="entries"></div>
+    <button class="add-btn" onclick="addRow()">+ Add another day</button>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="section-title">Visualisation</div>
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-title">Daily savings</div>
+      <div class="chart-card-sub">Amount saved each day</div>
+      <div class="chart-wrap"><canvas id="barChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Cumulative total</div>
+      <div class="chart-card-sub">Running sum of all savings</div>
+      <div class="chart-wrap"><canvas id="lineChart"></canvas></div>
+    </div>
+  </div>
+
+</main>
+
+<footer>Daily Savings Tracker &nbsp;·&nbsp; ₹ Indian Rupee &nbsp;·&nbsp; Edit your data above to update charts</footer>
+
+<script>
+let rows = [
+  { label: 'Day 1', amount: 200 },
+  { label: 'Day 2', amount: 350 },
+  { label: 'Day 3', amount: 150 },
+  { label: 'Day 4', amount: 500 },
+  { label: 'Day 5', amount: 300 },
+];
+
+function fmt(n) { return '₹' + Math.round(n).toLocaleString('en-IN'); }
+
+function renderRows() {
+  const c = document.getElementById('entries');
+  c.innerHTML = '';
+  rows.forEach((r, i) => {
+    const d = document.createElement('div');
+    d.className = 'entry-row';
+    d.innerHTML = `
+      <input type="text" value="${r.label}" placeholder="e.g. Monday" oninput="rows[${i}].label=this.value;update()">
+      <input type="number" value="${r.amount}" min="0" step="1" placeholder="0" oninput="rows[${i}].amount=parseFloat(this.value)||0;update()">
+      <button class="remove-btn" onclick="removeRow(${i})" title="Remove">×</button>
+    `;
+    c.appendChild(d);
+  });
+}
+
+function addRow() {
+  rows.push({ label: 'Day ' + (rows.length + 1), amount: 0 });
+  renderRows();
+  update();
+}
+
+function removeRow(i) {
+  if (rows.length <= 1) return;
+  rows.splice(i, 1);
+  renderRows();
+  update();
+}
+
+let barChart, lineChart;
+
+function update() {
+  const labels = rows.map(r => r.label);
+  const amounts = rows.map(r => r.amount);
+  const cumulative = amounts.reduce((acc, v, i) => { acc.push((acc[i-1]||0)+v); return acc; }, []);
+  const total = amounts.reduce((a,b)=>a+b,0);
+  const avg = amounts.length ? total/amounts.length : 0;
+  const best = Math.max(...amounts, 0);
+
+  document.getElementById('m-total').textContent = fmt(total);
+  document.getElementById('m-avg').textContent = fmt(avg);
+  document.getElementById('m-best').textContent = fmt(best);
+
+  const gridColor = 'rgba(26,22,18,0.07)';
+  const tickColor = '#9a9188';
+
+  if (barChart) barChart.destroy();
+  barChart = new Chart(document.getElementById('barChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: amounts,
+        backgroundColor: amounts.map(v => v === best ? '#c8430a' : '#e8c4a8'),
+        borderRadius: 4,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => fmt(ctx.parsed.y) }, backgroundColor: '#1a1612', titleColor: '#f5f0e8', bodyColor: '#e8c4a8' }},
+      scales: {
+        x: { ticks: { autoSkip: false, maxRotation: 40, color: tickColor, font: { family: 'DM Mono', size: 11 } }, grid: { display: false } },
+        y: { beginAtZero: true, ticks: { color: tickColor, font: { family: 'DM Mono', size: 11 }, callback: v => '₹' + v.toLocaleString('en-IN') }, grid: { color: gridColor } }
+      }
+    }
+  });
+
+  if (lineChart) lineChart.destroy();
+  lineChart = new Chart(document.getElementById('lineChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: cumulative,
+        borderColor: '#1b6b4a',
+        backgroundColor: 'rgba(27,107,74,0.1)',
+        pointBackgroundColor: '#1b6b4a',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: 5,
+        fill: true,
+        tension: 0.4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => 'Total: ' + fmt(ctx.parsed.y) }, backgroundColor: '#1a1612', titleColor: '#f5f0e8', bodyColor: '#a8d4bf' }},
+      scales: {
+        x: { ticks: { autoSkip: false, maxRotation: 40, color: tickColor, font: { family: 'DM Mono', size: 11 } }, grid: { display: false } },
+        y: { beginAtZero: true, ticks: { color: tickColor, font: { family: 'DM Mono', size: 11 }, callback: v => '₹' + v.toLocaleString('en-IN') }, grid: { color: gridColor } }
+      }
+    }
+  });
+}
+
+renderRows();
+update();
+</script>
+</body>
+</html>
